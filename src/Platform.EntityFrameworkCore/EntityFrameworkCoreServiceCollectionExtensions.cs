@@ -1,5 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Platform.EntityFrameworkCore.Auditing;
+using Platform.EntityFrameworkCore.Repositories;
+using Platform.EntityFrameworkCore.Services;
 
 namespace Platform.EntityFrameworkCore;
 
@@ -26,6 +30,12 @@ public static class EntityFrameworkCoreServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configureOptions);
+
+        services.TryAddSingleton<TimeProvider>(TimeProvider.System);
+        services.TryAddScoped<ICurrentUser, StubCurrentUser>();
+        services.TryAddScoped(typeof(IRepository<,>), typeof(EfRepository<,>));
+        services.TryAddScoped(typeof(IEfRepository<,>), typeof(EfRepository<,>));
+        services.TryAddScoped(typeof(ICrudService<,>), typeof(CrudService<,>));
 
         services.AddDbContextFactory<ApplicationDbContext>(options =>
         {
