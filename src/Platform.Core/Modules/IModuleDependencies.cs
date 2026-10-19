@@ -16,7 +16,7 @@ public sealed class BusinessModule : IModule, IModuleDependencies
 
     public void RegisterServices(ModuleContext context)
     {
-        // Register Business services.
+        // Register Demo.Business services.
     }
 }
 */

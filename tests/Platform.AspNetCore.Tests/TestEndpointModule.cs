@@ -23,7 +23,7 @@ public sealed class TestEndpointModule : IModule, IWebModule
             "/api/business/health",
             () => Results.Ok(new
             {
-                Module = "Business",
+                Module = "Demo.Business",
                 Status = "Available"
             }));
     }

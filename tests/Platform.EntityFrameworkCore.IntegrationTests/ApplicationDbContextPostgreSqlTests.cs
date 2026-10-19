@@ -2,17 +2,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Platform.Core.Modules;
-using Platform.EntityFrameworkCore;
 using Platform.EntityFrameworkCore.Auditing;
-using Platform.EntityFrameworkCore.TestFixtures;
 using Platform.EntityFrameworkCore.Repositories;
+using Platform.EntityFrameworkCore.TestFixtures;
 
 namespace Platform.EntityFrameworkCore.IntegrationTests;
 
 [Collection(PostgreSqlCollectionNames.Name)]
-public sealed class ApplicationDbContextPostgreSqlTests(PostgreSqlFixture fixture)
+public sealed class ApplicationDbContextPostgreSqlTests(PostgreSqlFixture fixture) : IClassFixture<PostgreSqlFixture>
 {
-    [Fact(DisplayName = "ApplicationDbContext сохраняет и читает данные в PostgreSQL через фабрику") ]
+    [Fact(DisplayName = "ApplicationDbContext сохраняет и читает данные в PostgreSQL через фабрику")]
     public async Task Factory_WhenUsedWithPostgreSql_CanPersistAndReadEntity()
     {
         var services = new ServiceCollection();

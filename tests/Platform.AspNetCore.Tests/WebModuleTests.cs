@@ -72,7 +72,7 @@ public sealed class WebModuleTests
             .ReadFromJsonAsync<BusinessHealthResponse>();
 
         Assert.NotNull(result);
-        Assert.Equal("Business", result.Module);
+        Assert.Equal("Demo.Business", result.Module);
         Assert.Equal("Available", result.Status);
     }
 

@@ -9,7 +9,7 @@ using Platform.EntityFrameworkCore.Repositories;
 namespace Platform.EntityFrameworkCore.IntegrationTests.DemoBusinessModuleTests;
 
 [Collection(PostgreSqlCollectionNames.Name)]
-public partial class BusinessModuleIntegrationTests(PostgreSqlFixture fixture)
+public partial class BusinessModuleIntegrationTests(PostgreSqlFixture fixture) :  IClassFixture<PostgreSqlFixture>
 {
     [Fact]
     public async Task Should_Save_And_Load_Order_With_Details()
