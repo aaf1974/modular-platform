@@ -18,7 +18,8 @@ public sealed class BusinessModule : IModule, IEfModule, IWebModule
 
     public void RegisterServices(ModuleContext context)
     {
-        context.Services.AddScoped<CreateOrderService>();
+        context.Services.AddScoped<CreateOrderService>()
+            .AddScoped<GetOrderByIdService>();
         
         context.Services
             .AddControllers()

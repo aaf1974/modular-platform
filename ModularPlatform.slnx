@@ -1,5 +1,7 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Platform.AspNetCore.HealthChecks/Platform.AspNetCore.HealthChecks.csproj" />
+    <Project Path="src/Platform.AspNetCore.OpenApi/Platform.AspNetCore.OpenApi.csproj" />
     <Project Path="src/Platform.AspNetCore/Platform.AspNetCore.csproj" />
     <Project Path="src/Platform.Core/Platform.Core.csproj" />
     <Project Path="src/Platform.EntityFrameworkCore/Platform.EntityFrameworkCore.csproj" />
@@ -17,6 +19,7 @@
     <Project Path="src/Modules/Authorization/Authorization.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Demo.Api.IntegrationTests/Demo.Api.IntegrationTests.csproj" />
     <Project Path="tests/Platform.AspNetCore.Tests/Platform.AspNetCore.Tests.csproj" />
     <Project Path="tests/Platform.Core.Tests/Platform.Core.Tests.csproj" />
     <Project Path="tests/Platform.EntityFrameworkCore.Tests/Platform.EntityFrameworkCore.Tests.csproj" />

@@ -4,14 +4,9 @@ using Platform.EntityFrameworkCore.Repositories;
 
 namespace Business.Services;
 
-public sealed class CreateOrderService(
-    IRepository<Order, Guid> orderRepository,
-    ApplicationDbContext dbContext)
+public sealed class CreateOrderService(IRepository<Order, Guid> orderRepository, ApplicationDbContext dbContext)
 {
-    public async Task<Guid> CreateAsync(
-        string orderNumber,
-        IReadOnlyCollection<CreateOrderDetail> details,
-        CancellationToken cancellationToken = default)
+    public async Task<Guid> CreateAsync(string orderNumber, IReadOnlyCollection<CreateOrderDetail> details, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(orderNumber);
         ArgumentNullException.ThrowIfNull(details);

@@ -1,6 +1,9 @@
 using Business;
 using Microsoft.EntityFrameworkCore;
+using Platform.AspNetCore.Configuration;
+using Platform.AspNetCore.HealthChecks;
 using Platform.AspNetCore.Modules;
+using Platform.AspNetCore.OpenApi;
 using Platform.Core.Modules;
 using Platform.EntityFrameworkCore;
 
@@ -15,22 +18,17 @@ builder.Services.AddPlatformEntityFrameworkCore(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         npgsql => npgsql.MigrationsAssembly(typeof(Demo.Api.PostgresMigration.MigrationMarker).Assembly)
-        );
+    );
 });
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddPlatform(options =>
+    options.AddWebFeature(new SwaggerFeature())
+        .AddWebFeature(new HealthCheckFeature(hc => hc.AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!)))
+        .AddWebFeature(new HealthCheckUiFeature())
+    );
 
 var app = builder.Build();
 app.UseModules();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-//app.MapGet("/", () => "Hello World!");
 
 app.MapGet("/", () => Results.Ok(new
 {
@@ -39,3 +37,6 @@ app.MapGet("/", () => Results.Ok(new
 }));
 
 app.Run();
+
+
+public partial class Program;

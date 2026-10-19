@@ -1,3 +1,4 @@
+using Business.Contracts;
 using Business.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -5,7 +6,7 @@ namespace Business.Controllers;
 
 [ApiController]
 [Route("api/orders")]
-public sealed class OrdersController(CreateOrderService createOrderService) : ControllerBase
+public sealed class OrdersController(CreateOrderService createOrderService, GetOrderByIdService getOrderByIdService) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Create(
@@ -31,11 +32,32 @@ public sealed class OrdersController(CreateOrderService createOrderService) : Co
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<ActionResult<OrderResponse>> GetById(
+        Guid id,
+        CancellationToken cancellationToken)
     {
-        // Здесь добавим чтение заказа через отдельный query-сервис
-        // или репозиторий, когда определим нужный контракт.
-        return Ok(new { Id = id });
+        var order = await getOrderByIdService.ExecuteAsync(
+            id,
+            cancellationToken);
+
+        if (order is null)
+        {
+            return NotFound();
+        }
+
+        var response = new OrderResponse(
+            order.Id,
+            order.OrderNumber,
+            order.CreatedAtUtc,
+            order.Details
+                .Select(detail => new OrderDetailResponse(
+                    detail.Id,
+                    detail.ProductName,
+                    detail.Quantity,
+                    detail.UnitPrice))
+                .ToArray());
+
+        return Ok(response);
     }
 }
 
