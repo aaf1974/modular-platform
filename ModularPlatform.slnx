@@ -1,0 +1,26 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Platform.AspNetCore/Platform.AspNetCore.csproj" />
+    <Project Path="src/Platform.Core/Platform.Core.csproj" />
+    <Project Path="src/Platform.EntityFrameworkCore/Platform.EntityFrameworkCore.csproj" />
+    <Project Path="src/Platform.Events.Abstractions/Platform.Events.Abstractions.csproj" />
+    <Project Path="src/Platform.Events.InProcess/Platform.Events.InProcess.csproj" />
+  </Folder>
+  <Folder Name="/src/Applications/">
+    <Project Path="src/Applications/Demo.Api/Demo.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/">
+    <Project Path="src/Modules/Authentication.Contracts/Authentication.Contracts.csproj" />
+    <Project Path="src/Modules/Authentication/Authentication.csproj" />
+    <Project Path="src/Modules/Authorization/Authorization.csproj" />
+    <Project Path="src/Modules/Business.Contracts/Business.Contracts.csproj" />
+    <Project Path="src/Modules/Business/Business.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Platform.AspNetCore.Tests/Platform.AspNetCore.Tests.csproj" />
+    <Project Path="tests/Platform.Core.Tests/Platform.Core.Tests.csproj" />
+    <Project Path="tests/Platform.EntityFrameworkCore.Tests/Platform.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="tests/Platform.EntityFrameworkCore.TestFixtures/Platform.EntityFrameworkCore.TestFixtures.csproj" />
+    <Project Path="tests/Platform.EntityFrameworkCore.IntegrationTests/Platform.EntityFrameworkCore.IntegrationTests.csproj" />
+  </Folder>
+</Solution>
