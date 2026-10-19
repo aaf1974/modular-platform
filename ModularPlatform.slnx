@@ -7,8 +7,9 @@
     <Project Path="src/Platform.Events.InProcess/Platform.Events.InProcess.csproj" />
   </Folder>
   <Folder Name="/src/DemoApplications/">
-    <Project Path="src/Applications/Demo.Api/Demo.Api.csproj" />
-    <Project Path="src/Modules/Demo.Business/Demo.Business.csproj" />
+    <Project Path="src/DemoApplications/Demo.Api.PostgresMigration/Demo.Api.PostgresMigration.csproj" />
+    <Project Path="src/DemoApplications/Demo.Api/Demo.Api.csproj" />
+    <Project Path="src/DemoApplications/Demo.Business/Demo.Business.csproj" />
   </Folder>
   <Folder Name="/src/Modules/">
     <Project Path="src/Modules/Authentication.Contracts/Authentication.Contracts.csproj" />

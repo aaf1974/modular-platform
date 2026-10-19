@@ -12,6 +12,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <ProjectReference Include="..\..\Platform.AspNetCore\Platform.AspNetCore.csproj" />
     <ProjectReference Include="..\..\Platform.EntityFrameworkCore\Platform.EntityFrameworkCore.csproj" />
   </ItemGroup>
 

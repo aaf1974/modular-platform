@@ -42,7 +42,7 @@ public static class EntityFrameworkCoreServiceCollectionExtensions
             configureOptions(options);
             options.ReplaceService<Microsoft.EntityFrameworkCore.Infrastructure.IModelCacheKeyFactory,
                 ApplicationModelCacheKeyFactory>();
-        });
+        }, ServiceLifetime.Scoped);
         return services;
     }
 }
