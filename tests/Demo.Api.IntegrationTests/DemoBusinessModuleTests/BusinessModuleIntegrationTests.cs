@@ -1,5 +1,6 @@
 using Business;
 using Business.Entities;
+using Demo.Api.IntegrationTests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,26 +9,15 @@ using Platform.EntityFrameworkCore.Repositories;
 
 namespace Platform.EntityFrameworkCore.IntegrationTests.DemoBusinessModuleTests;
 
-[Collection(PostgreSqlCollectionNames.Name)]
-public partial class BusinessModuleIntegrationTests(PostgreSqlFixture fixture) :  IClassFixture<PostgreSqlFixture>
+[Collection(DemoApiCollection.Name)]
+public partial class BusinessModuleIntegrationTests(DemoApiFixture  fixture) :  IClassFixture<DemoApiFixture >
 {
     [Fact]
     public async Task Should_Save_And_Load_Order_With_Details()
     {
         // Arrange
-        var services = new ServiceCollection();
-        services.AddModule<BusinessModule>(new ConfigurationBuilder().Build(), "IntegrationTest");
-        services.AddPlatformEntityFrameworkCore(options => options.UseNpgsql(fixture.ConnectionString));
-
-        await using var serviceProvider = services.BuildServiceProvider();
-        var factory = serviceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
-
-        await using (var context = await factory.CreateDbContextAsync())
-        {
-            await context.Database.EnsureCreatedAsync();
-        }
-
-        await using var dbContext = await factory.CreateDbContextAsync();
+        await using var scope = fixture.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         var order = new Order
         {
@@ -81,19 +71,9 @@ public partial class BusinessModuleIntegrationTests(PostgreSqlFixture fixture) :
     public async Task Should_Add_Order_Without_Saving_Changes()
     {
         // Arrange
-        var services = new ServiceCollection();
-
-        services.AddModule<BusinessModule>(new ConfigurationBuilder().Build(), "IntegrationTest");
-        services.AddPlatformEntityFrameworkCore(options => options.UseNpgsql(fixture.ConnectionString));
-
-        await using var serviceProvider = services.BuildServiceProvider();
-        await using var scope = serviceProvider.CreateAsyncScope();
-
-        var scopedServices = scope.ServiceProvider;
-        var context = scopedServices.GetRequiredService<ApplicationDbContext>();
-        await context.Database.EnsureCreatedAsync();
-
-        var repository = scopedServices.GetRequiredService<IRepository<Order, Guid>>();
+        await using var scope = fixture.Services.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var repository = scope.ServiceProvider.GetRequiredService<IRepository<Order, Guid>>();
 
         var order = new Order
         {
@@ -127,17 +107,7 @@ public partial class BusinessModuleIntegrationTests(PostgreSqlFixture fixture) :
     [Fact(DisplayName = "Репозиторий обновляет заказ и сохраняет изменения в PostgreSQL")]
     public async Task Should_Update_Order_And_Save_Changes()
     {
-        var services = new ServiceCollection();
-
-        services.AddModule<BusinessModule>(
-            new ConfigurationBuilder().Build(),
-            "IntegrationTest");
-
-        services.AddPlatformEntityFrameworkCore(options => options.UseNpgsql(fixture.ConnectionString));
-
-        await using var serviceProvider = services.BuildServiceProvider();
-        await using var scope = serviceProvider.CreateAsyncScope();
-
+        await using var scope = fixture.Services.CreateAsyncScope();
         var scopedServices = scope.ServiceProvider;
 
         var context = scopedServices.GetRequiredService<ApplicationDbContext>();
@@ -195,22 +165,11 @@ public partial class BusinessModuleIntegrationTests(PostgreSqlFixture fixture) :
     [Fact(DisplayName = "Soft delete скрывает заказ из обычных запросов, сохраняя его в базе")]
     public async Task Should_Soft_Delete_Order_And_Keep_It_In_Database()
     {
-        var services = new ServiceCollection();
-
-        services.AddModule<BusinessModule>(new ConfigurationBuilder().Build(), "IntegrationTest");
-
-        services.AddPlatformEntityFrameworkCore(options => options.UseNpgsql(fixture.ConnectionString));
-
-        await using var serviceProvider = services.BuildServiceProvider();
-        await using var scope = serviceProvider.CreateAsyncScope();
-
+        await using var scope = fixture.Services.CreateAsyncScope();
         var scopedServices = scope.ServiceProvider;
-
         var context = scopedServices.GetRequiredService<ApplicationDbContext>();
-        await context.Database.EnsureCreatedAsync();
 
-        var repository =
-            scopedServices.GetRequiredService<IEfRepository<Order, Guid>>();
+        var repository = scopedServices.GetRequiredService<IEfRepository<Order, Guid>>();
 
         var order = new Order
         {
@@ -247,17 +206,7 @@ public partial class BusinessModuleIntegrationTests(PostgreSqlFixture fixture) :
     [Fact(DisplayName = "Soft delete заказа сохраняет его детали в базе данных")]
     public async Task Should_Soft_Delete_Order_And_Preserve_Details()
     {
-        var services = new ServiceCollection();
-
-        services.AddModule<BusinessModule>(
-            new ConfigurationBuilder().Build(),
-            "IntegrationTest");
-
-        services.AddPlatformEntityFrameworkCore(options => options.UseNpgsql(fixture.ConnectionString));
-
-        await using var serviceProvider = services.BuildServiceProvider();
-        await using var scope = serviceProvider.CreateAsyncScope();
-
+        await using var scope = fixture.Services.CreateAsyncScope();
         var scopedServices = scope.ServiceProvider;
 
         var context = scopedServices.GetRequiredService<ApplicationDbContext>();
@@ -320,30 +269,12 @@ public partial class BusinessModuleIntegrationTests(PostgreSqlFixture fixture) :
     [Fact(DisplayName = "Репозиторий физически удаляет сущность без поддержки soft delete")]
     public async Task Should_Physically_Delete_Entity_Without_Soft_Delete()
     {
-        var services = new ServiceCollection();
-
-        // Здесь зарегистрируй существующий тестовый модуль,
-        // содержащий PhysicalDeleteEntityConfiguration.
-        services.AddModule<BusinessModule>(
-            new ConfigurationBuilder().Build(),
-            "IntegrationTest");
-
-        services.AddPlatformEntityFrameworkCore(
-            options => options.UseNpgsql(fixture.ConnectionString));
-
-        await using var serviceProvider = services.BuildServiceProvider();
-        await using var scope = serviceProvider.CreateAsyncScope();
-
+        await using var scope = fixture.Services.CreateAsyncScope();
         var scopedServices = scope.ServiceProvider;
 
-        var context =
-            scopedServices.GetRequiredService<ApplicationDbContext>();
+        var context = scopedServices.GetRequiredService<ApplicationDbContext>();
 
-        await context.Database.EnsureCreatedAsync();
-
-        var repository =
-            scopedServices.GetRequiredService<
-                IRepository<PhysicalDeleteEntity, Guid>>();
+        var repository = scopedServices.GetRequiredService<IRepository<PhysicalDeleteEntity, Guid>>();
 
         var entity = new PhysicalDeleteEntity
         {

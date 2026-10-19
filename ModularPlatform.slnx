@@ -20,10 +20,8 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Demo.Api.IntegrationTests/Demo.Api.IntegrationTests.csproj" />
-    <Project Path="tests/Platform.AspNetCore.Tests/Platform.AspNetCore.Tests.csproj" />
     <Project Path="tests/Platform.Core.Tests/Platform.Core.Tests.csproj" />
     <Project Path="tests/Platform.EntityFrameworkCore.Tests/Platform.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/Platform.EntityFrameworkCore.TestFixtures/Platform.EntityFrameworkCore.TestFixtures.csproj" />
-    <Project Path="tests/Platform.EntityFrameworkCore.IntegrationTests/Platform.EntityFrameworkCore.IntegrationTests.csproj" />
   </Folder>
 </Solution>

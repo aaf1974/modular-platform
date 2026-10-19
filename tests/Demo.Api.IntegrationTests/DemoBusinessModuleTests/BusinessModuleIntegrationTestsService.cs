@@ -1,11 +1,8 @@
-using Business;
 using Business.Entities;
 using Business.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
-using Platform.Core.Modules;
 
 namespace Platform.EntityFrameworkCore.IntegrationTests.DemoBusinessModuleTests;
 
@@ -16,13 +13,10 @@ public partial class BusinessModuleIntegrationTests
     {
         // Arrange
         var orderNumber = $"ORD-{Guid.NewGuid():N}";
-        var services = new ServiceCollection();
-
-        services.AddModule<BusinessModule>(new ConfigurationBuilder().Build(), "IntegrationTest");
-        services.AddPlatformEntityFrameworkCore(options => options.UseNpgsql(fixture.ConnectionString));
-
-        await using var serviceProvider = services.BuildServiceProvider();
-        await using (var scope = serviceProvider.CreateAsyncScope())
+        // await using var scope = fixture.Services.CreateAsyncScope();
+        // var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        await using (var scope =  fixture.Services.CreateAsyncScope())
         {
             var scopedServices = scope.ServiceProvider;
             var context = scopedServices.GetRequiredService<ApplicationDbContext>();
@@ -49,7 +43,7 @@ public partial class BusinessModuleIntegrationTests
         }
 
         // Assert: проверяем через новый scope и новый DbContext.
-        await using (var scope = serviceProvider.CreateAsyncScope())
+        await using (var scope =  fixture.Services.CreateAsyncScope())
         {
             var dbContext = scope.ServiceProvider
                 .GetRequiredService<ApplicationDbContext>();

@@ -20,9 +20,9 @@ public sealed class DemoApiFixture : IAsyncLifetime
 
     public HttpClient Client { get; private set; } = null!;
 
-    public IServiceProvider Services => _factory?.Services
-                                        ?? throw new InvalidOperationException(
-                                            "The test application has not been initialized.");
+    public IServiceProvider Services => _factory?.Services ?? throw new InvalidOperationException("The test application has not been initialized.");
+
+    public WebApplicationFactory<Program> Factory => _factory ?? throw new InvalidOperationException("Fixture not initialized");
 
     public async Task InitializeAsync()
     {

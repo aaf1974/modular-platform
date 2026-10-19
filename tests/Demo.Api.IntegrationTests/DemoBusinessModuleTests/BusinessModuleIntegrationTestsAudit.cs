@@ -1,5 +1,7 @@
 using Business;
 using Business.Entities;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,23 +17,24 @@ public partial class BusinessModuleIntegrationTests
     private static readonly DateTimeOffset InitialTime =
         new(2026, 10, 19, 12, 0, 0, TimeSpan.Zero);
 
-    private ServiceProvider BuildServiceProvider(FakeTimeProvider clock)
-    {
-        var services = new ServiceCollection();
-
-        services.AddSingleton<TimeProvider>(clock);
-
-        services.AddScoped<ICurrentUser>(_ => new TestCurrentUser("test-user-123"));
-
-        services.AddModule<BusinessModule>(
-            new ConfigurationBuilder().Build(),
-            "IntegrationTest");
-
-        services.AddPlatformEntityFrameworkCore(
-            options => options.UseNpgsql(fixture.ConnectionString));
-
-        return services.BuildServiceProvider();
-    }
+   
+    // private ServiceProvider BuildServiceProvider(FakeTimeProvider clock)
+    // {
+    //     var services = new ServiceCollection();
+    //     
+    //     services.AddSingleton<TimeProvider>(clock);
+    //     
+    //     services.AddScoped<ICurrentUser>(_ => new TestCurrentUser("test-user-123"));
+    //     
+    //     services.AddModule<BusinessModule>(
+    //         new ConfigurationBuilder().Build(),
+    //         "IntegrationTest");
+    //     
+    //     services.AddPlatformEntityFrameworkCore(
+    //         options => options.UseNpgsql(fixture.ConnectionString));
+    //     
+    //     return services.BuildServiceProvider();
+    // }
     
     private sealed class TestCurrentUser(string userId) : ICurrentUser
     {
@@ -43,16 +46,22 @@ public partial class BusinessModuleIntegrationTests
     {
         var clock = new FakeTimeProvider(InitialTime);
 
-        await using var provider = BuildServiceProvider(clock);
-        await using var scope = provider.CreateAsyncScope();
+        // 1. Создаем кастомизированную фабрику для этого конкретного теста
+        // fixture.Factory должен быть доступен (можно сделать public в DemoApiFixture или использовать наследника)
+        await using var customizedFactory = fixture.Factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureTestServices(services =>
+            {
+                // 2. Подменяем реальные сервисы на фейки для теста аудит-полей
+                services.AddSingleton<TimeProvider>(clock);
+                services.AddScoped<ICurrentUser>(_ => new TestCurrentUser("test-user-123"));
+            });
+        });
 
+        // 3. Создаем Scope из кастомизированного приложения
+        await using var scope = customizedFactory.Services.CreateAsyncScope();
         var services = scope.ServiceProvider;
-
-        var context =
-            services.GetRequiredService<ApplicationDbContext>();
-
-        await context.Database.EnsureCreatedAsync();
-
+        var context = services.GetRequiredService<ApplicationDbContext>();
         var repository = services.GetRequiredService<IRepository<Order, Guid>>();
 
         var order = new Order
@@ -76,18 +85,19 @@ public partial class BusinessModuleIntegrationTests
     {
         var clock = new FakeTimeProvider(InitialTime);
 
-        await using var provider = BuildServiceProvider(clock);
-        await using var scope = provider.CreateAsyncScope();
-
+        await using var customizedFactory = fixture.Factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureTestServices(services =>
+            {
+                // 2. Подменяем реальные сервисы на фейки для теста аудит-полей
+                services.AddSingleton<TimeProvider>(clock);
+                services.AddScoped<ICurrentUser>(_ => new TestCurrentUser("test-user-123"));
+            });
+        });
+        await using var scope = customizedFactory.Services.CreateAsyncScope();
         var services = scope.ServiceProvider;
-
-        var context =
-            services.GetRequiredService<ApplicationDbContext>();
-
-        await context.Database.EnsureCreatedAsync();
-
-        var repository =
-            services.GetRequiredService<IRepository<Order, Guid>>();
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        var repository = services.GetRequiredService<IRepository<Order, Guid>>();
 
         var order = new Order
         {
@@ -120,18 +130,20 @@ public partial class BusinessModuleIntegrationTests
     {
         var clock = new FakeTimeProvider(InitialTime);
 
-        await using var provider = BuildServiceProvider(clock);
-        await using var scope = provider.CreateAsyncScope();
-
+        await using var customizedFactory = fixture.Factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureTestServices(services =>
+            {
+                // 2. Подменяем реальные сервисы на фейки для теста аудит-полей
+                services.AddSingleton<TimeProvider>(clock);
+                services.AddScoped<ICurrentUser>(_ => new TestCurrentUser("test-user-123"));
+            });
+        });
+        await using var scope = customizedFactory.Services.CreateAsyncScope();
         var services = scope.ServiceProvider;
 
-        var context =
-            services.GetRequiredService<ApplicationDbContext>();
-
-        await context.Database.EnsureCreatedAsync();
-
-        var repository =
-            services.GetRequiredService<IRepository<Order, Guid>>();
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        var repository = services.GetRequiredService<IRepository<Order, Guid>>();
 
         var order = new Order
         {
@@ -159,15 +171,19 @@ public partial class BusinessModuleIntegrationTests
     {
         var clock = new FakeTimeProvider(InitialTime);
 
-        await using var provider = BuildServiceProvider(clock);
-        await using var scope = provider.CreateAsyncScope();
-
+        await using var customizedFactory = fixture.Factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureTestServices(services =>
+            {
+                // 2. Подменяем реальные сервисы на фейки для теста аудит-полей
+                services.AddSingleton<TimeProvider>(clock);
+                services.AddScoped<ICurrentUser>(_ => new TestCurrentUser("test-user-123"));
+            });
+        });
+        await using var scope = customizedFactory.Services.CreateAsyncScope();
         var services = scope.ServiceProvider;
 
         var context = services.GetRequiredService<ApplicationDbContext>();
-
-        await context.Database.EnsureCreatedAsync();
-
         var repository = services.GetRequiredService<IRepository<Order, Guid>>();
 
         var order = new Order
