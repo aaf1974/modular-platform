@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Platform.AspNetCore.Configuration;
 using Platform.AspNetCore.Exceptions;
-using Xunit;
 
 namespace Platform.AspNetCore.Tests.Configuration;
 

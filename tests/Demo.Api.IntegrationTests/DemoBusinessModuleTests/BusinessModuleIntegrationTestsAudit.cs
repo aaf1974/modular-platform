@@ -1,12 +1,8 @@
-using Business;
 using Business.Entities;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
-using Platform.Core.Modules;
 using Platform.EntityFrameworkCore.Auditing;
 using Platform.EntityFrameworkCore.Repositories;
 
@@ -14,33 +10,13 @@ namespace Platform.EntityFrameworkCore.IntegrationTests.DemoBusinessModuleTests;
 
 public partial class BusinessModuleIntegrationTests
 {
-    private static readonly DateTimeOffset InitialTime =
-        new(2026, 10, 19, 12, 0, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset InitialTime = new(2026, 10, 19, 12, 0, 0, TimeSpan.Zero);
 
-   
-    // private ServiceProvider BuildServiceProvider(FakeTimeProvider clock)
-    // {
-    //     var services = new ServiceCollection();
-    //     
-    //     services.AddSingleton<TimeProvider>(clock);
-    //     
-    //     services.AddScoped<ICurrentUser>(_ => new TestCurrentUser("test-user-123"));
-    //     
-    //     services.AddModule<BusinessModule>(
-    //         new ConfigurationBuilder().Build(),
-    //         "IntegrationTest");
-    //     
-    //     services.AddPlatformEntityFrameworkCore(
-    //         options => options.UseNpgsql(fixture.ConnectionString));
-    //     
-    //     return services.BuildServiceProvider();
-    // }
-    
     private sealed class TestCurrentUser(string userId) : ICurrentUser
     {
-        public string? UserId => userId;
+        public string UserId => userId;
     }
-    
+
     [Fact(DisplayName = "При создании заказа аудит записывает фиксированное время и пользователя")]
     public async Task Should_Set_Creation_Audit_Using_Fixed_Time()
     {
@@ -79,7 +55,7 @@ public partial class BusinessModuleIntegrationTests
         Assert.Null(order.ModifiedAtUtc);
         Assert.Null(order.ModifiedByUserId);
     }
-    
+
     [Fact(DisplayName = "При обновлении заказа аудит меняет время изменения, сохраняя поля создания")]
     public async Task Should_Update_Modification_Audit_Without_Changing_Creation_Audit()
     {
@@ -124,7 +100,7 @@ public partial class BusinessModuleIntegrationTests
         Assert.Equal(modificationTime, order.ModifiedAtUtc);
         Assert.Equal("test-user-123", order.ModifiedByUserId);
     }
-    
+
     [Fact(DisplayName = "При мягком удалении заказа записываются время и пользователь удаления")]
     public async Task Should_Set_Soft_Delete_Audit_Using_Fixed_Time()
     {
@@ -165,7 +141,7 @@ public partial class BusinessModuleIntegrationTests
 
         Assert.Null(await repository.GetByIdAsync(order.Id));
     }
-    
+
     [Fact(DisplayName = "Повторное сохранение неизменённого заказа не обновляет аудит")]
     public async Task Should_Not_Update_Audit_When_Entity_Is_Unchanged()
     {
@@ -205,5 +181,56 @@ public partial class BusinessModuleIntegrationTests
         Assert.Equal(createdAt, order.CreatedAtUtc);
         Assert.Equal(modifiedAt, order.ModifiedAtUtc);
         Assert.Equal(modifiedBy, order.ModifiedByUserId);
+    }
+
+    [Fact(DisplayName = "Аудит мягкого удаления сохраняется в PostgresSQL")]
+    public async Task Should_Persist_Soft_Delete_Audit_In_Database()
+    {
+        var clock = new FakeTimeProvider(InitialTime);
+
+        await using var customizedFactory =
+            fixture.Factory.WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureTestServices(services =>
+                {
+                    services.AddSingleton<TimeProvider>(clock);
+                    services.AddScoped<ICurrentUser>(_ => new TestCurrentUser("test-user-123"));
+                });
+            });
+
+        await using var scope =
+            customizedFactory.Services.CreateAsyncScope();
+
+        var services = scope.ServiceProvider;
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        var repository =
+            services.GetRequiredService<IRepository<Order, Guid>>();
+
+        var order = new Order
+        {
+            OrderNumber = $"ORD-{Guid.NewGuid():N}"
+        };
+
+        repository.Add(order);
+        await context.SaveChangesAsync();
+
+        var orderId = order.Id;
+        var deletionTime = InitialTime.AddMinutes(10);
+
+        clock.SetUtcNow(deletionTime);
+
+        repository.Delete(order);
+        await context.SaveChangesAsync();
+
+        // Убираем отслеживаемый объект, чтобы проверить данные из БД.
+        context.ChangeTracker.Clear();
+
+        var persistedOrder = await context.Set<Order>()
+            .IgnoreQueryFilters()
+            .SingleAsync(x => x.Id == orderId);
+
+        Assert.True(persistedOrder.IsDeleted);
+        Assert.Equal(deletionTime, persistedOrder.DeletedAtUtc);
+        Assert.Equal("test-user-123", persistedOrder.DeletedByUserId);
     }
 }

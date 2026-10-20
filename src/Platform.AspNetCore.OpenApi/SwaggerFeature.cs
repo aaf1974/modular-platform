@@ -10,6 +10,8 @@ namespace Platform.AspNetCore.OpenApi;
 /// </summary>
 public sealed class SwaggerFeature : IPlatformWebFeature
 {
+    public int Order => 200;
+
     /// <summary>
     /// Регистрирует сервисы, необходимые для генерации OpenAPI-документации.
     /// </summary>

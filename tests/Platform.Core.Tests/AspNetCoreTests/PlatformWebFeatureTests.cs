@@ -155,7 +155,7 @@ public sealed class PlatformWebFeatureTests
     /// Проверяет, что инфраструктурные возможности настраиваются
     /// перед веб-модулями с сохранением порядка регистрации.
     /// </summary>
-    [Fact(DisplayName = "Инфраструктурные возможности настраиваются перед веб-модулями в порядке регистрации")]
+    [Fact(DisplayName = "Компоненты HTTP-конвейера настраиваются по Order")]
     public void UseModules_ShouldConfigureFeaturesBeforeWebModulesInRegistrationOrder()
     {
         // Arrange
@@ -192,8 +192,8 @@ public sealed class PlatformWebFeatureTests
             [
                 "Feature1",
                 "Feature2",
-                "ModuleA",
-                "ModuleB"
+                "ModuleB",
+                "ModuleA"
             ],
             executionOrder);
 
@@ -201,6 +201,30 @@ public sealed class PlatformWebFeatureTests
         Assert.Equal(1, secondFeature.ApplicationConfigurationCount);
     }
     
+    [Fact(DisplayName = "UseModules сортирует features и веб-модули по Order, а при равном значении сохраняет правила tie-break")]
+    public void UseModules_ShouldSortFeaturesAndModulesByOrder()
+    {
+        var executionOrder = new List<string>();
+        var featureLate = new RecordingPlatformWebFeature("FeatureLate", executionOrder, order: 30);
+        var featureEarly = new RecordingPlatformWebFeature("FeatureEarly", executionOrder, order: 5);
+        var featureSameOrder = new RecordingPlatformWebFeature("FeatureSame", executionOrder, order: 20);
+        WebModuleTests.TestOrderModuleA.ExecutionOrder = executionOrder;
+        WebModuleTests.TestOrderModuleB.ExecutionOrder = executionOrder;
+
+        var builder = WebApplication.CreateBuilder();
+        builder.Services.AddPlatform(options => options
+            .AddWebFeature(featureLate)
+            .AddWebFeature(featureEarly)
+            .AddWebFeature(featureSameOrder));
+        builder.AddModule<WebModuleTests.TestOrderModuleA>();
+        builder.AddModule<WebModuleTests.TestOrderModuleB>();
+
+        using var app = builder.Build();
+        app.UseModules();
+
+        executionOrder.ShouldBe(["FeatureEarly", "ModuleB", "FeatureSame", "ModuleA", "FeatureLate"]);
+    }
+
     private sealed class TestPlatformWebFeature : IPlatformWebFeature
     {
         public bool WasConfiguredServices { get; private set; }
@@ -238,7 +262,8 @@ public sealed class PlatformWebFeatureTests
         public RecordingPlatformWebFeature(
             string name,
             List<string> executionOrder,
-            bool shouldThrow = false)
+            bool shouldThrow = false,
+            int order = 0)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
             ArgumentNullException.ThrowIfNull(executionOrder);
@@ -246,7 +271,10 @@ public sealed class PlatformWebFeatureTests
             _name = name;
             _executionOrder = executionOrder;
             _shouldThrow = shouldThrow;
+            Order = order;
         }
+
+        public int Order { get; }
 
         /// <summary>
         /// Получает количество вызовов настройки приложения.

@@ -12,6 +12,13 @@ namespace Platform.AspNetCore.Modules;
 /// </summary>
 public static class WebModuleApplicationExtensions
 {
+    /// <summary>
+    /// Таблица слабых связей (Weak-ссылок) для отслеживания состояния вызовов <see cref="UseModules"/> 
+    /// на конкретных экземплярах <see cref="WebApplication"/>.
+    /// Использование <see cref="ConditionalWeakTable{TKey, TValue}"/> предотвращает утечки памяти (Memory Leaks), 
+    /// позволяя сборщику мусора (GC) беспрепятственно удалять экземпляры <see cref="WebApplication"/>, 
+    /// когда они выходят из обращения, автоматически очищая связанные с ними данные состояния.
+    /// </summary>
     private static readonly ConditionalWeakTable<WebApplication, UseModulesState> ApplicationStates = new();
 
     /// <summary>
@@ -47,61 +54,100 @@ public static class WebModuleApplicationExtensions
         var logger = app.Logger;
         logger.LogInformation("Начата настройка инфраструктурных возможностей и веб-модулей.");
 
-        var context = new WebModuleContext(app);
-        var features = app.Services
-            .GetServices<IPlatformWebFeature>()
-            .ToArray();
+        var features = app.Services.GetServices<IPlatformWebFeature>().ToArray();
+        var pipelineItems = CreatePipelineItems(app);
 
-        logger.LogInformation("Обнаружено инфраструктурных возможностей платформы: {FeatureCount}.", features.Length);
+        logger.LogInformation("Настройка HTTP-конвейера: {FeatureCount} возможностей и {ModuleCount} модулей.",
+            features.Length,
+            pipelineItems.Count(item => item.Kind == 1));
 
-        foreach (var feature in features)
+        foreach (var item in pipelineItems)
         {
-            var featureName = feature.GetType().FullName ?? feature.GetType().Name;
-            logger.LogInformation("Настройка инфраструктурной возможности {FeatureName}.", featureName);
-
+            logger.LogInformation("Настройка компонента HTTP-конвейера {ComponentName} (Order={Order}).",
+                item.Name, item.Order);
             try
             {
-                feature.ConfigureApplication(app);
-                logger.LogInformation("Инфраструктурная возможность {FeatureName} настроена.", featureName);
+                item.Configure();
+                logger.LogInformation("Компонент HTTP-конвейера {ComponentName} настроен.", item.Name);
             }
             catch (Exception exception)
             {
-                logger.LogError(exception, "Ошибка настройки инфраструктурной возможности {FeatureName}.", featureName);
-                throw;
-            }
-        }
-
-        var modules = app.Services.GetServices<IModule>().ToArray();
-        logger.LogInformation("Обнаружено зарегистрированных модулей: {ModuleCount}.", modules.Length);
-
-        foreach (var module in modules)
-        {
-            var moduleName = module.GetType().FullName ?? module.GetType().Name;
-            if (module is not IWebModule webModule)
-            {
-                logger.LogInformation("Модуль {ModuleName} не реализует IWebModule. " +
-                                      "Настройка HTTP-конвейера для него не требуется.",
-                    moduleName);
-                continue;
-            }
-
-            logger.LogInformation("Настройка HTTP-конвейера модуля {ModuleName}.", moduleName);
-            try
-            {
-                webModule.ConfigureApplication(context);
-                logger.LogInformation("HTTP-конвейер модуля {ModuleName} настроен.", moduleName);
-            }
-            catch (Exception exception)
-            {
-                logger.LogError(exception, "Ошибка настройки HTTP-конвейера модуля {ModuleName}.", moduleName);
+                logger.LogError(exception, "Ошибка настройки компонента HTTP-конвейера {ComponentName}.", item.Name);
                 throw;
             }
         }
 
         logger.LogInformation("Настройка инфраструктурных возможностей и веб-модулей завершена.");
-
         return app;
     }
+
+        /// <summary>
+    /// Извлекает зарегистрированные инфраструктурные возможности (<see cref="IPlatformWebFeature"/>) 
+    /// и веб-модули (<see cref="IWebModule"/>) из DI-контейнера приложения и формирует 
+    /// единый, строго отсортированный массив элементов конвейера для последующей инициализации.
+    /// </summary>
+    /// <param name="app">Экземпляр веб-приложения, предоставляющий доступ к DI-контейнеру.</param>
+    /// <returns>Отсортированный массив элементов конвейера <see cref="PipelineItem"/>.</returns>
+    /// <remarks>
+    /// <para>
+    /// Сортировка элементов выполняется последовательно по трем критериям:
+    /// </para>
+    /// <list type="number">
+    /// <item>
+    /// <description><see cref="PipelineItem.Order"/> — основной явный приоритет компонента (меньше значение — раньше вызов).</description>
+    /// </item>
+    /// <item>
+    /// <description><see cref="PipelineItem.Kind"/> — тип компонента (при одинаковом Order инфраструктурные возможности <c>Kind = 0</c> всегда идут перед веб-модулями <c>Kind = 1</c>).</description>
+    /// </item>
+    /// <item>
+    /// <description><see cref="PipelineItem.RegistrationIndex"/> — исходный порядок регистрации в DI-контейнере для обеспечения детерминированности.</description>
+    /// </item>
+    /// </list>
+    /// </remarks>
+    private static PipelineItem[] CreatePipelineItems(WebApplication app)
+    {
+        var context = new WebModuleContext(app);
+        var features = app.Services.GetServices<IPlatformWebFeature>().ToArray();
+        var modules = app.Services.GetServices<IModule>().ToArray();
+
+        return features
+            .Select((feature, index) => new PipelineItem(
+                feature.Order, 0, index, feature.GetType().FullName ?? feature.GetType().Name,
+                () => feature.ConfigureApplication(app)))
+            .Concat(modules.Select((module, index) => (module, index))
+                .Where(item => item.module is IWebModule)
+                .Select(item => new PipelineItem(
+                    ((IWebModule)item.module).Order, 1, item.index,
+                    item.module.GetType().FullName ?? item.module.GetType().Name,
+                    () => ((IWebModule)item.module).ConfigureApplication(context))))
+            .OrderBy(item => item.Order)
+            .ThenBy(item => item.Kind)
+            .ThenBy(item => item.RegistrationIndex)
+            .ToArray();
+    }
+        
+    /// <summary>
+    /// Представляет элемент конвейера middleware с метаданными сортировки
+    /// и действием настройки.
+    /// </summary>
+    /// <param name="Order">
+    /// Порядок выполнения. Элементы с меньшим значением настраиваются раньше.
+    /// </param>
+    /// <param name="Kind">
+    /// Тип компонента, используемый для определения порядка между компонентами
+    /// разных типов при одинаковом значении <paramref name="Order"/>.
+    /// </param>
+    /// <param name="RegistrationIndex">
+    /// Исходный индекс регистрации, обеспечивающий детерминированный порядок,
+    /// если предыдущие критерии сортировки совпадают.
+    /// </param>
+    /// <param name="Name">
+    /// Название компонента, используемое для диагностики и формирования сообщений об ошибках.
+    /// </param>
+    /// <param name="Configure">
+    /// Действие, настраивающее middleware компонента в конвейере приложения.
+    /// </param>
+    private sealed record PipelineItem(int Order, int Kind, int RegistrationIndex, string Name, Action Configure);
 
     private sealed class UseModulesState
     {

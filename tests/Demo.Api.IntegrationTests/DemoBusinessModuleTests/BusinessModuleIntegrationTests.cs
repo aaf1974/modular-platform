@@ -1,10 +1,7 @@
-using Business;
 using Business.Entities;
 using Demo.Api.IntegrationTests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Platform.Core.Modules;
 using Platform.EntityFrameworkCore.Repositories;
 
 namespace Platform.EntityFrameworkCore.IntegrationTests.DemoBusinessModuleTests;

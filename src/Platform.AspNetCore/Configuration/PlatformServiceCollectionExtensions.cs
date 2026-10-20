@@ -20,9 +20,7 @@ public static class PlatformServiceCollectionExtensions
     /// <exception cref="InvalidOperationException">
     /// Один и тот же экземпляр инфраструктурной возможности зарегистрирован повторно.
     /// </exception>
-    public static IServiceCollection AddPlatform(
-        this IServiceCollection services,
-        Action<PlatformOptions> configure)
+    public static IServiceCollection AddPlatform(this IServiceCollection services, Action<PlatformOptions> configure)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configure);
@@ -56,7 +54,7 @@ public static class PlatformServiceCollectionExtensions
         services.AddProblemDetails();
         services.AddExceptionHandler<DefaultExceptionHandler>();
         
-        foreach (var feature in options.WebFeatures)
+        foreach (var feature in options.WebFeatures.OrderBy(x => x.Order))
         {
             feature.ConfigureServices(services);
             services.AddSingleton<IPlatformWebFeature>(feature);

@@ -13,6 +13,8 @@ namespace Platform.AspNetCore.HealthChecks;
 public sealed class HealthCheckFeature(Action<IHealthChecksBuilder>? configureHealthChecks = null) 
     : IPlatformWebFeature
 {
+    public int Order => 100;
+
     /// <summary>
     /// Регистрирует службы проверки состояния приложения.
     /// </summary>
@@ -34,7 +36,15 @@ public sealed class HealthCheckFeature(Action<IHealthChecksBuilder>? configureHe
     {
         ArgumentNullException.ThrowIfNull(app);
 
-        app.MapHealthChecks("/health", new HealthCheckOptions
+        // Liveness проверяет только способность процесса отвечать и не запускает проверки зависимостей.
+        app.MapHealthChecks("/health/live", new HealthCheckOptions
+        {
+            Predicate = _ => false,
+            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+        });
+
+        // Readiness включает зарегистрированные проверки зависимостей хоста.
+        app.MapHealthChecks("/health/ready", new HealthCheckOptions
         {
             ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
         });

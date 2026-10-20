@@ -46,6 +46,12 @@ public sealed class PlatformOptions
 public interface IPlatformWebFeature
 {
     /// <summary>
+    /// Определяет порядок настройки HTTP-конвейера. Меньшие значения выполняются раньше.
+    /// При равных значениях сохраняется порядок регистрации; features предшествуют веб-модулям.
+    /// </summary>
+    int Order => 500;
+
+    /// <summary>
     /// Регистрирует сервисы, необходимые инфраструктурной возможности.
     /// </summary>
     /// <param name="services">Коллекция сервисов приложения.</param>

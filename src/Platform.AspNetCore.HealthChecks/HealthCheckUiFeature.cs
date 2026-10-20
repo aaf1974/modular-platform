@@ -23,7 +23,7 @@ public sealed class HealthCheckUiFeature : IPlatformWebFeature
             {
                 options.AddHealthCheckEndpoint(
                     "Demo API",
-                    "/health");
+                    "/health/ready");
             })
             .AddInMemoryStorage();
     }

@@ -2,7 +2,6 @@ using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Platform.Core.Modules;
-using Platform.EntityFrameworkCore;
 
 namespace Platform.EntityFrameworkCore.TestFixtures;
 
@@ -86,5 +85,9 @@ public sealed class AuditedModuleEntityConfiguration : IEntityTypeConfiguration<
         builder.ToTable("audited_module_entities");
         builder.HasKey(entity => entity.Id);
         builder.Property(entity => entity.Name).HasMaxLength(200).IsRequired();
+
+        // Тестовый пользовательский фильтр: ApplicationDbContext должен сохранить его,
+        // добавляя к модели фильтр мягкого удаления.
+        builder.HasQueryFilter(entity => entity.Name != "filtered");
     }
 }

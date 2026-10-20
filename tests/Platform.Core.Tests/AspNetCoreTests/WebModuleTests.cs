@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Platform.AspNetCore.Configuration;
 using Platform.AspNetCore.Exceptions;
 using Platform.AspNetCore.Modules;
 using Platform.Core.Modules;
@@ -82,7 +80,7 @@ public sealed partial class WebModuleTests
         Assert.Equal("Available", result.Status);
     }
 
-    [Fact(DisplayName = "Веб-модули должны настраиваться в порядке регистрации")]
+    [Fact(DisplayName = "Веб-модули должны настраиваться по Order с учётом порядка регистрации")]
     public void UseModules_ConfiguresWebModulesInRegistrationOrder()
     {
         var executionOrder = new List<string>();
@@ -100,7 +98,7 @@ public sealed partial class WebModuleTests
         app.UseModules();
 
         Assert.Equal(
-            ["ModuleA", "ModuleB"],
+            ["ModuleB", "ModuleA"],
             executionOrder);
     }
     
@@ -243,6 +241,7 @@ public sealed partial class WebModuleTests
     public sealed class TestOrderModuleA : IModule, IWebModule
     {
         public static List<string>? ExecutionOrder { get; set; }
+        public int Order => 20;
 
         public void RegisterServices(ModuleContext context)
         {
@@ -257,6 +256,7 @@ public sealed partial class WebModuleTests
     public sealed class TestOrderModuleB : IModule, IWebModule
     {
         public static List<string>? ExecutionOrder { get; set; }
+        public int Order => 5;
 
         public void RegisterServices(ModuleContext context)
         {
@@ -302,8 +302,7 @@ public sealed partial class WebModuleTests
         {
             ArgumentNullException.ThrowIfNull(context);
 
-            throw new InvalidOperationException(
-                "Ошибка настройки тестового веб-модуля.");
+            throw new InvalidOperationException("Ошибка настройки тестового веб-модуля.");
         }
 
         public void RegisterServices(ModuleContext context)

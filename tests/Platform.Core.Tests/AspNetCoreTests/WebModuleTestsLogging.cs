@@ -19,7 +19,7 @@ public partial class WebModuleTests
         var builder = WebApplication.CreateBuilder();
         builder.Logging.ClearProviders();
         builder.Logging.AddProvider(loggerProvider);
-        builder.AddModule<WebModuleTests.ThrowingWebModule>();
+        builder.AddModule<ThrowingWebModule>();
 
         using var app = builder.Build();
 
@@ -29,11 +29,12 @@ public partial class WebModuleTests
 
         // Assert
         var logEntry = Assert.Single(
-            loggerProvider.Entries.Where(entry =>
+            loggerProvider.Entries,
+            entry =>
                 entry.Level == LogLevel.Error &&
                 entry.Message.Contains(
-                    "Ошибка настройки HTTP-конвейера модуля",
-                    StringComparison.Ordinal)));
+                    "Ошибка настройки компонента HTTP-конвейера",
+                    StringComparison.Ordinal));
 
         Assert.Same(exception, logEntry.Exception);
         Assert.Contains("ThrowingWebModule", logEntry.Message);

@@ -30,8 +30,7 @@ public static class WebModuleRegistrationExtensions
     /// его HTTP-конфигурация будет выполнена позднее
     /// при вызове <see cref="WebModuleApplicationExtensions.UseModules"/>.
     /// </remarks>
-    public static WebApplicationBuilder AddModule<TModule>(
-        this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddModule<TModule>(this WebApplicationBuilder builder)
         where TModule : class, IModule, new()
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -58,8 +57,7 @@ public static class WebModuleRegistrationExtensions
     /// Рекомендуется вызывать после регистрации всех модулей
     /// и до вызова Build().
     /// </remarks>
-    public static WebApplicationBuilder ValidateModules(
-        this WebApplicationBuilder builder)
+    public static WebApplicationBuilder ValidateModules(this WebApplicationBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
 

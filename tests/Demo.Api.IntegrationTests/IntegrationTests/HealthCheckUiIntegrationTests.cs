@@ -34,7 +34,7 @@ public sealed class HealthCheckUiIntegrationTests(DemoApiFixture fixture)
     {
         // Act
         using var uiResponse = await fixture.Client.GetAsync("/healthchecks-ui");
-        using var healthResponse = await fixture.Client.GetAsync("/health");
+        using var healthResponse = await fixture.Client.GetAsync("/health/ready");
         var content = await healthResponse.Content.ReadAsStringAsync();
 
         // Assert

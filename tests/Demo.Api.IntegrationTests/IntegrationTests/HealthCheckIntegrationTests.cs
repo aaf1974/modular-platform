@@ -13,11 +13,22 @@ namespace Demo.Api.IntegrationTests.IntegrationTests;
 [Collection(DemoApiCollection.Name)]
 public sealed class HealthCheckIntegrationTests(DemoApiFixture fixture)
 {
+    [Fact(DisplayName = "Liveness endpoint отвечает успешно независимо от проверок зависимостей")]
+    public async Task GetHealthLive_ShouldReturnOkWithoutDependencyEntries()
+    {
+        using var response = await fixture.Client.GetAsync("/health/live");
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        document.RootElement.GetProperty("status").GetString().ShouldBe("Healthy");
+        document.RootElement.GetProperty("entries").EnumerateObject().ShouldBeEmpty();
+    }
+
     [Fact(DisplayName = "Проверяет, что endpoint состояния приложения возвращает успешный ответ.")]
     public async Task GetHealth_ShouldReturnOkAndHealthyStatus()
     {
         // Act
-        using var response = await fixture.Client.GetAsync("/health");
+        using var response = await fixture.Client.GetAsync("/health/ready");
 
         var content = await response.Content.ReadAsStringAsync();
 
@@ -30,11 +41,11 @@ public sealed class HealthCheckIntegrationTests(DemoApiFixture fixture)
     /// Проверяет, что endpoint возвращает JSON-отчёт с общим статусом
     /// и результатами зарегистрированных проверок.
     /// </summary>
-    [Fact(DisplayName = "GET health returns a detailed JSON health report")]
+    [Fact(DisplayName = "GET health ready returns a detailed JSON health report")]
     public async Task GetHealth_ShouldReturnDetailedJsonReport()
     {
         // Act
-        using var response = await fixture.Client.GetAsync("/health");
+        using var response = await fixture.Client.GetAsync("/health/ready");
         var content = await response.Content.ReadAsStringAsync();
 
         // Assert
@@ -54,11 +65,11 @@ public sealed class HealthCheckIntegrationTests(DemoApiFixture fixture)
     /// Проверяет, что зарегистрированная через AddNpgSql проверка
     /// действительно подключается к тестовой базе PostgreSQL.
     /// </summary>
-    [Fact(DisplayName = "GET health reports PostgreSQL check as healthy")]
+    [Fact(DisplayName = "GET health ready reports PostgreSQL check as healthy")]
     public async Task GetHealth_ShouldReportPostgresAsHealthy()
     {
         // Act
-        using var response = await fixture.Client.GetAsync("/health");
+        using var response = await fixture.Client.GetAsync("/health/ready");
         var content = await response.Content.ReadAsStringAsync();
 
         // Assert

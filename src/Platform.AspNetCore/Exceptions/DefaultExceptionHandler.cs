@@ -10,8 +10,7 @@ namespace Platform.AspNetCore.Exceptions;
 /// <summary>
 /// Обрабатывает необработанные исключения HTTP-запросов.
 /// </summary>
-public sealed class DefaultExceptionHandler(
-    IProblemDetailsService problemDetailsService,
+public sealed class DefaultExceptionHandler(IProblemDetailsService problemDetailsService,
     ILogger<DefaultExceptionHandler> logger,
     IWebHostEnvironment environment)
     : IExceptionHandler
@@ -21,9 +20,7 @@ public sealed class DefaultExceptionHandler(
         Exception exception,
         CancellationToken cancellationToken)
     {
-        logger.LogError(
-            exception,
-            "Необработанное исключение при обработке HTTP-запроса. TraceId: {TraceId}",
+        logger.LogError(exception, "Необработанное исключение при обработке HTTP-запроса. TraceId: {TraceId}",
             httpContext.TraceIdentifier);
 
         var problemDetails = new ProblemDetails
@@ -31,28 +28,22 @@ public sealed class DefaultExceptionHandler(
             Status = StatusCodes.Status500InternalServerError,
             Title = "Произошла внутренняя ошибка сервера.",
             Type = "https://tools.ietf.org/html/rfc9110#section-15.6.1",
-            Instance = httpContext.Request.Path
+            Instance = httpContext.Request.Path,
+            Extensions =
+            {
+                ["traceId"] = httpContext.TraceIdentifier
+            }
         };
-
-        problemDetails.Extensions["traceId"] =
-            httpContext.TraceIdentifier;
 
         if (environment.IsDevelopment())
         {
             problemDetails.Title = "Произошло необработанное исключение.";
-
             problemDetails.Detail = exception.Message;
-
-            problemDetails.Extensions["exceptionType"] =
-                exception.GetType().FullName;
-
-            problemDetails.Extensions["stackTrace"] =
-                exception.StackTrace;
+            problemDetails.Extensions["exceptionType"] = exception.GetType().FullName;
+            problemDetails.Extensions["stackTrace"] = exception.StackTrace;
         }
 
-        httpContext.Response.StatusCode =
-            StatusCodes.Status500InternalServerError;
-
+        httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
         await problemDetailsService.WriteAsync(
             new ProblemDetailsContext
             {
