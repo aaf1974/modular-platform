@@ -3,12 +3,15 @@ using System.Net.Http.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Platform.AspNetCore.Configuration;
 using Platform.AspNetCore.Modules;
 using Platform.Core.Modules;
 
 namespace Platform.AspNetCore.Tests;
 
-public sealed class WebModuleTests
+public sealed partial class WebModuleTests
 {
     [Fact(DisplayName = "Веб-модуль должен настраиваться на том же экземпляре, на котором выполнялась регистрация")]
     public void UseModules_UsesSameModuleInstance()
@@ -139,6 +142,58 @@ public sealed class WebModuleTests
             response.Headers.GetValues("X-Module-Middleware").Single());
     }
     
+    /// <summary>
+    /// Проверяет, что ошибка настройки веб-модуля пробрасывается,
+    /// а повторный вызов UseModules запрещён.
+    /// </summary>
+    [Fact(DisplayName = "UseModules пробрасывает ошибку веб-модуля и запрещает повторный вызов")]
+    public void UseModules_WhenWebModuleConfigurationThrows_ShouldPropagateExceptionAndRejectRetry()
+    {
+        // Arrange
+        var builder = WebApplication.CreateBuilder();
+
+        builder.AddModule<ThrowingWebModule>();
+
+        using var app = builder.Build();
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => app.UseModules());
+
+        // Assert
+        Assert.Equal(
+            "Ошибка настройки тестового веб-модуля.",
+            exception.Message);
+
+        var retryException = Assert.Throws<InvalidOperationException>(
+            () => app.UseModules());
+
+        Assert.Equal(
+            "Метод UseModules() уже вызывался для данного веб-приложения.",
+            retryException.Message);
+    }
+    
+
+    
+    /// <summary>
+    /// Проверяет, что UseModules выполняется без зарегистрированных модулей
+    /// и инфраструктурных возможностей.
+    /// </summary>
+    [Fact(DisplayName = "UseModules успешно выполняется без зарегистрированных модулей и возможностей")]
+    public void UseModules_WhenNoModulesOrFeaturesRegistered_ShouldCompleteSuccessfully()
+    {
+        // Arrange
+        var builder = WebApplication.CreateBuilder();
+
+        using var app = builder.Build();
+
+        // Act
+        var exception = Record.Exception(() => app.UseModules());
+
+        // Assert
+        Assert.Null(exception);
+    }
+    
     private sealed record BusinessHealthResponse(string Module, string Status);
     
     public sealed class TestWebModule : IModule, IWebModule
@@ -227,4 +282,28 @@ public sealed class WebModuleTests
                 () => Results.Ok(new { Status = "Available" }));
         }
     }
+    
+    /// <summary>
+    /// Тестовый веб-модуль, который выбрасывает исключение при настройке приложения.
+    /// </summary>
+    private sealed class ThrowingWebModule : IModule, IWebModule
+    {
+        /// <summary>
+        /// Выбрасывает исключение при настройке HTTP-конвейера.
+        /// </summary>
+        /// <param name="context">Контекст настройки веб-модуля.</param>
+        public void ConfigureApplication(WebModuleContext context)
+        {
+            ArgumentNullException.ThrowIfNull(context);
+
+            throw new InvalidOperationException(
+                "Ошибка настройки тестового веб-модуля.");
+        }
+
+        public void RegisterServices(ModuleContext context)
+        {
+            ArgumentNullException.ThrowIfNull(context);
+        }
+    }
 }
+

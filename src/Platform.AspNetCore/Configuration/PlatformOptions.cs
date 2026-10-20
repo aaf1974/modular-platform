@@ -56,5 +56,4 @@ public interface IPlatformWebFeature
     /// </summary>
     /// <param name="app">Построенное веб-приложение.</param>
     void ConfigureApplication(WebApplication app);
-
 }

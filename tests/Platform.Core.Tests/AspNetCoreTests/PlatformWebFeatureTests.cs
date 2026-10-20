@@ -151,6 +151,56 @@ public sealed class PlatformWebFeatureTests
         executionOrder.ShouldBe(["Failing"]);
     }
 
+    /// <summary>
+    /// Проверяет, что инфраструктурные возможности настраиваются
+    /// перед веб-модулями с сохранением порядка регистрации.
+    /// </summary>
+    [Fact(DisplayName = "Инфраструктурные возможности настраиваются перед веб-модулями в порядке регистрации")]
+    public void UseModules_ShouldConfigureFeaturesBeforeWebModulesInRegistrationOrder()
+    {
+        // Arrange
+        var executionOrder = new List<string>();
+
+        var firstFeature = new RecordingPlatformWebFeature(
+            "Feature1",
+            executionOrder);
+
+        var secondFeature = new RecordingPlatformWebFeature(
+            "Feature2",
+            executionOrder);
+
+        WebModuleTests.TestOrderModuleA.ExecutionOrder = executionOrder;
+        WebModuleTests.TestOrderModuleB.ExecutionOrder = executionOrder;
+
+        var builder = WebApplication.CreateBuilder();
+
+        builder.Services.AddPlatform(options =>
+            options
+                .AddWebFeature(firstFeature)
+                .AddWebFeature(secondFeature));
+
+        builder.AddModule<WebModuleTests.TestOrderModuleA>();
+        builder.AddModule<WebModuleTests.TestOrderModuleB>();
+
+        using var app = builder.Build();
+
+        // Act
+        app.UseModules();
+
+        // Assert
+        Assert.Equal(
+            [
+                "Feature1",
+                "Feature2",
+                "ModuleA",
+                "ModuleB"
+            ],
+            executionOrder);
+
+        Assert.Equal(1, firstFeature.ApplicationConfigurationCount);
+        Assert.Equal(1, secondFeature.ApplicationConfigurationCount);
+    }
+    
     private sealed class TestPlatformWebFeature : IPlatformWebFeature
     {
         public bool WasConfiguredServices { get; private set; }

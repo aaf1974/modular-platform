@@ -12,8 +12,7 @@ namespace Platform.AspNetCore.Modules;
 /// </summary>
 public static class WebModuleApplicationExtensions
 {
-    private static readonly ConditionalWeakTable<WebApplication, UseModulesState>
-        ApplicationStates = new();
+    private static readonly ConditionalWeakTable<WebApplication, UseModulesState> ApplicationStates = new();
 
     /// <summary>
     /// Выполняет настройку HTTP-функциональности зарегистрированных веб-модулей
