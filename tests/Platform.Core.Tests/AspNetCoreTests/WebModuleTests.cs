@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Platform.AspNetCore.Configuration;
+using Platform.AspNetCore.Exceptions;
 using Platform.AspNetCore.Modules;
 using Platform.Core.Modules;
 
@@ -54,7 +55,9 @@ public sealed partial class WebModuleTests
         var builder = WebApplication.CreateBuilder();
 
         builder.WebHost.UseTestServer();
-
+        builder.Services.AddProblemDetails();
+        builder.Services.AddExceptionHandler<DefaultExceptionHandler>();
+        
         builder.AddModule<TestEndpointModule>();
         builder.ValidateModules();
 
@@ -125,6 +128,9 @@ public sealed partial class WebModuleTests
         var builder = WebApplication.CreateBuilder();
 
         builder.WebHost.UseTestServer();
+        builder.Services.AddProblemDetails();
+        builder.Services.AddExceptionHandler<DefaultExceptionHandler>();
+        
         builder.AddModule<TestMiddlewareModule>();
 
         await using var app = builder.Build();

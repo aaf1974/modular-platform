@@ -9,9 +9,7 @@ namespace Business.Controllers;
 public sealed class OrdersController(CreateOrderService createOrderService, GetOrderByIdService getOrderByIdService) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> Create(
-        [FromBody] CreateOrderRequest request,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Create([FromBody] CreateOrderRequest request, CancellationToken cancellationToken)
     {
         var details = request.Details
             .Select(detail => new CreateOrderDetail(
@@ -20,15 +18,9 @@ public sealed class OrdersController(CreateOrderService createOrderService, GetO
                 detail.UnitPrice))
             .ToArray();
 
-        var id = await createOrderService.CreateAsync(
-            request.OrderNumber,
-            details,
-            cancellationToken);
+        var id = await createOrderService.CreateAsync(request.OrderNumber, details, cancellationToken);
 
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id },
-            new { Id = id });
+        return CreatedAtAction(nameof(GetById), new { id }, new { Id = id });
     }
 
     [HttpGet("{id:guid}")]

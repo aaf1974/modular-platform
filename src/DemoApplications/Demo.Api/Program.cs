@@ -13,17 +13,22 @@ builder.Services.AddModule<BusinessModule>(
     builder.Configuration,
     builder.Environment.EnvironmentName);
 
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException(
+        "Connection string 'DefaultConnection' is not configured.");
+
 builder.Services.AddPlatformEntityFrameworkCore(options =>
 {
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
+        connectionString,
         npgsql => npgsql.MigrationsAssembly(typeof(Demo.Api.PostgresMigration.MigrationMarker).Assembly)
     );
 });
 
 builder.Services.AddPlatform(options =>
     options.AddWebFeature(new SwaggerFeature())
-        .AddWebFeature(new HealthCheckFeature(hc => hc.AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!)))
+        .AddWebFeature(new HealthCheckFeature(hc => hc.AddNpgSql(connectionString)))
         .AddWebFeature(new HealthCheckUiFeature())
     );
 

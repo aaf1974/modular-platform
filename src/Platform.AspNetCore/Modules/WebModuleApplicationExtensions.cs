@@ -42,6 +42,8 @@ public static class WebModuleApplicationExtensions
             throw new InvalidOperationException("Метод UseModules() уже вызывался для данного веб-приложения.");
         }
 
+        app.UseExceptionHandler();
+        
         var logger = app.Logger;
         logger.LogInformation("Начата настройка инфраструктурных возможностей и веб-модулей.");
 
@@ -54,9 +56,7 @@ public static class WebModuleApplicationExtensions
 
         foreach (var feature in features)
         {
-            var featureName = feature.GetType().FullName
-                              ?? feature.GetType().Name;
-
+            var featureName = feature.GetType().FullName ?? feature.GetType().Name;
             logger.LogInformation("Настройка инфраструктурной возможности {FeatureName}.", featureName);
 
             try
@@ -72,35 +72,28 @@ public static class WebModuleApplicationExtensions
         }
 
         var modules = app.Services.GetServices<IModule>().ToArray();
-
         logger.LogInformation("Обнаружено зарегистрированных модулей: {ModuleCount}.", modules.Length);
 
         foreach (var module in modules)
         {
-            var moduleName = module.GetType().FullName
-                             ?? module.GetType().Name;
-
+            var moduleName = module.GetType().FullName ?? module.GetType().Name;
             if (module is not IWebModule webModule)
             {
                 logger.LogInformation("Модуль {ModuleName} не реализует IWebModule. " +
                                       "Настройка HTTP-конвейера для него не требуется.",
                     moduleName);
-
                 continue;
             }
 
             logger.LogInformation("Настройка HTTP-конвейера модуля {ModuleName}.", moduleName);
-
             try
             {
                 webModule.ConfigureApplication(context);
-
                 logger.LogInformation("HTTP-конвейер модуля {ModuleName} настроен.", moduleName);
             }
             catch (Exception exception)
             {
                 logger.LogError(exception, "Ошибка настройки HTTP-конвейера модуля {ModuleName}.", moduleName);
-
                 throw;
             }
         }

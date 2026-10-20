@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Platform.AspNetCore.Exceptions;
 
 namespace Platform.AspNetCore.Configuration;
 
@@ -52,6 +53,9 @@ public static class PlatformServiceCollectionExtensions
             }
         }
 
+        services.AddProblemDetails();
+        services.AddExceptionHandler<DefaultExceptionHandler>();
+        
         foreach (var feature in options.WebFeatures)
         {
             feature.ConfigureServices(services);
