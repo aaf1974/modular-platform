@@ -44,8 +44,7 @@ public class ConnectionStringTests
 
         var exception = Should.Throw<InvalidOperationException>(() => configuration.GetConnectionStringOrThrow());
 
-        exception.Message.ShouldBe(
-            "Connection string 'DefaultConnection' is not configured.");
+        exception.Message.ShouldBe("Connection string 'DefaultConnection' is not configured or is empty.");
     }
 
     [Fact(DisplayName = "Выбрасывает исключение, если строка подключения с указанным именем не настроена")]
@@ -56,8 +55,7 @@ public class ConnectionStringTests
         var exception =
             Should.Throw<InvalidOperationException>(() => configuration.GetConnectionStringOrThrow("Reporting"));
 
-        exception.Message.ShouldBe(
-            "Connection string 'Reporting' is not configured.");
+        exception.Message.ShouldBe("Connection string 'Reporting' is not configured or is empty.");
     }
 
     [Fact(DisplayName = "Выбрасывает ArgumentNullException, если конфигурация равна null")]
@@ -68,6 +66,31 @@ public class ConnectionStringTests
         Should.Throw<ArgumentNullException>(() => configuration.GetConnectionStringOrThrow());
     }
     
+    [Theory(DisplayName = "Пустая или состоящая из пробелов строка подключения должна приводить к ошибке")]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void GetConnectionStringOrThrow_EmptyConnectionString_Throws(
+        string connectionString)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:DefaultConnection"] = connectionString
+                })
+            .Build();
+
+        Assert.Throws<InvalidOperationException>(
+            () => configuration.GetConnectionStringOrThrow());
+    }
+
+    [Fact(DisplayName = "Пустое имя строки подключения должно приводить к ошибке аргумента")]
+    public void GetConnectionStringOrThrow_EmptyName_Throws()
+    {
+        var configuration = new ConfigurationBuilder().Build();
+
+        Assert.Throws<ArgumentException>(() => configuration.GetConnectionStringOrThrow(""));
+    }
     
     private static IConfiguration CreateConfiguration(params (string Key, string Value)[] settings)
     {

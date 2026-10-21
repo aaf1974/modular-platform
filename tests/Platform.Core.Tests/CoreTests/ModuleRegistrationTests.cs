@@ -2,9 +2,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Platform.Core.Modules;
 
-namespace Platform.Core.Tests;
+namespace Platform.Core.Tests.CoreTests;
 
-public sealed class ModuleRegistrationTests
+public sealed partial class ModuleRegistrationTests
 {
     private readonly IServiceCollection _services = new ServiceCollection();
 

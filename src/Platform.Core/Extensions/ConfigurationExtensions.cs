@@ -18,9 +18,14 @@ public static class ConfigurationExtensions
     public static string GetConnectionStringOrThrow(this IConfiguration configuration, string? name = null)
     {
         ArgumentNullException.ThrowIfNull(configuration);
-
         name ??= DefaultConnectionName;
-        return configuration.GetConnectionString(name)
-            ?? throw new InvalidOperationException($"Connection string '{name}' is not configured.");
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        var connectionString = configuration.GetConnectionString(name);
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException($"Connection string '{name}' is not configured or is empty.");
+        }
+        return connectionString;
     }
 }

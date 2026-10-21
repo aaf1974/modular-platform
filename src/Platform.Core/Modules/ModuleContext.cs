@@ -32,14 +32,11 @@ public sealed class ModuleContext
     /// <exception cref="ArgumentNullException">
     /// Один из переданных аргументов равен <see langword="null"/>.
     /// </exception>
-    public ModuleContext(
-        IServiceCollection services,
-        IConfiguration configuration,
-        string environmentName)
+    public ModuleContext(IServiceCollection services, IConfiguration configuration, string environmentName)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
-        ArgumentNullException.ThrowIfNull(environmentName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(environmentName);
 
         Services = services;
         Configuration = configuration;
