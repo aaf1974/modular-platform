@@ -1,3 +1,4 @@
+using Authentication;
 using Business;
 using Microsoft.EntityFrameworkCore;
 using Platform.AspNetCore.Configuration;
@@ -9,9 +10,8 @@ using Platform.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddModule<BusinessModule>(
-    builder.Configuration,
-    builder.Environment.EnvironmentName);
+builder.Services.AddModule<BusinessModule>(builder.Configuration, builder.Environment.EnvironmentName)
+    .AddModule<AuthenticationModule>(builder.Configuration, builder.Environment.EnvironmentName);
 
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")

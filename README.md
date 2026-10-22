@@ -13,7 +13,7 @@ Get-ChildItem -Directory -Recurse -Force |
      Remove-Item -Recurse -Force
 ```
 
-## Project to fiile
+## Project to file
 ```powershel
 $sourcePath = "E:\MyDevWork\modular-platform\src\Platform.Core\"
 $outputFile = "E:\MyDevWork\Platform.txt"
@@ -26,9 +26,20 @@ Get-ChildItem -Path $sourcePath -Recurse -Filter *.cs | ForEach-Object {
 }
 ```
 
+##
+```powershell
+Get-ChildItem -Path "E:\MyDevWork\modular-platform\src\Modules\Authentication" -Recurse -Filter *.cs |
+Select-Object -ExpandProperty FullName
+```
+
 ## Release
 ```bash
 dotnet restore
 dotnet build --configuration Release
 dotnet test --configuration Release --no-build
+```
+
+## List of tests
+```bash
+dotnet test .\tests\Demo.Api.IntegrationTests\Demo.Api.IntegrationTests.csproj --list-tests
 ```
